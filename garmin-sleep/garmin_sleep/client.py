@@ -34,9 +34,10 @@ def login_interactive() -> "Garmin":
     email = input("Garmin Connect email: ").strip()
     password = getpass.getpass("Garmin Connect password: ")
     client = Garmin(email=email, password=password, prompt_mfa=_prompt_mfa)
-    client.login()
     store.TOKEN_DIR.mkdir(parents=True, exist_ok=True)
-    client.garth.dump(str(store.TOKEN_DIR))
+    # Passing a tokenstore path makes login() persist OAuth tokens there
+    # (garminconnect >= 0.3 writes <dir>/garmin_tokens.json).
+    client.login(str(store.TOKEN_DIR))
     print(f"Logged in. Tokens cached in {store.TOKEN_DIR}")
     return client
 
@@ -48,7 +49,7 @@ def get_client() -> "Garmin":
             client = Garmin()
             client.login(str(store.TOKEN_DIR))
             return client
-        except (GarminConnectAuthenticationError, FileNotFoundError, Exception):
+        except Exception:
             print("Cached login expired; please log in again.", file=sys.stderr)
     return login_interactive()
 
